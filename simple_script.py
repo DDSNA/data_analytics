@@ -5,6 +5,8 @@ import sqlalchemy
 import os
 import logging
 
+import data_processing
+
 logging.basicConfig(level=logging.DEBUG, filename='app.log', filemode='w',
                     format='%(name)s - %(levelname)s - %(message)s')
 # set env file to .env
@@ -21,6 +23,8 @@ port = os.getenv("DB_PORT")
 logging.info(f"Connecting to {hostname}:{port} with: {user} and {password}")
 engine = sqlalchemy.create_engine(f'postgresql+psycopg2://{user}:{password}@{hostname}:{port}/{database}', echo=False, pool_pre_ping=True, pool_recycle=3600)
 logging.info("Connected to database")
+
+data_processing.cleanup_processed_files()
 
 # SELECT FROM TABLE INFORMATION_SCHEMA.TABLES ALL TABLES IN SCHEMA prun_data as list variable "tables" using salalchemy
 query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'prun_data'"
@@ -45,3 +49,6 @@ for table_name in tables_list:
     except Exception as e:
         logging.error(f"Error reading table: {table_name} with error: {e}")
         continue
+
+data_processing.create_plots(["temporary_df_hold_bids.csv", "temporary_df_hold_orders.csv"],
+                             ["H2O", "LST", "O", "FEO", "FE", "COF", "NS", "PT", "OVE"])
